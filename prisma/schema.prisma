@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String    // Hashed password
+  avatar        String?
+  role          Role      @default(USER)
+  status        UserStatus @default(ACTIVE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relasi
+  posts         Post[]
+  comments      Comment[]
+  createdCommunities Community[] // Komunitas yang dibuat oleh admin
+  // Relasi Many-to-Many
+  follows       Follow[]
+
+  @@map("users")
+}
+
+model Community {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  icon        String?  // URL atau path ke ikon komunitas
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relasi
+  creatorId   String
+  creator     User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  posts       Post[]
+  follows     Follow[]
+
+  @@map("communities")
+}
+
+model Post {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  image       String?  // URL or path to post image
+  status      PostStatus @default(ACTIVE)
+  isBoardPost Boolean  @default(false) // Untuk pengumuman dari admin
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relasi
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  communityId String
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  comments    Comment[]
+
+  @@map("posts")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relasi
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+// Tabel Hubungan (Many-to-Many) untuk Follow
+model Follow {
+  userId       String
+  communityId  String
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community  Community  @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  followedAt DateTime   @default(now())
+
+  @@id([userId, communityId])
+  @@map("follows")
+}
+
+// Enums
+enum Role {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED // Tidak bisa posting, hanya baca
+}
+
+enum PostStatus {
+  ACTIVE
+  SUSPENDED // Tidak ditampilkan
+}
