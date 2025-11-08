@@ -60,9 +60,24 @@ const authOptions = {
       
       // Handle session updates
       if (trigger === "update" && session) {
-        console.log('JWT callback - updating token with session:', session)
         token.name = session.name || token.name
         token.avatar = session.avatar || token.avatar
+      }
+      
+      // Always fetch fresh avatar from database when we have user ID
+      if (token.sub) {
+        try {
+          const { prisma } = await import("@/lib/db")
+          const freshUser = await prisma.user.findUnique({
+            where: { id: token.sub },
+            select: { avatar: true }
+          })
+          if (freshUser?.avatar) {
+            token.avatar = freshUser.avatar
+          }
+        } catch (error) {
+          // Silently handle errors - don't break auth flow
+        }
       }
       
       return token
@@ -74,7 +89,6 @@ const authOptions = {
         session.user.status = token.status as string
         session.user.avatar = token.avatar as string || undefined
         session.user.name = token.name as string
-        console.log('Session callback - updated session user:', session.user)
       }
       return session
     }

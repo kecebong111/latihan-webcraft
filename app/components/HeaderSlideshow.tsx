@@ -7,10 +7,12 @@ import { Community } from '@prisma/client';
 interface HeaderSlideshowProps {
   communities: (Community & { _count: { follows: number } })[];
   onJoinMain?: () => void;
-  onJoinClick?: (community: Community & { _count: { follows: number } }) => void;
+  onJoinClick?: (community: Community & { _count: { follows: number } }) => Promise<void>;
+  isAuthenticated?: boolean;
+  joinedCommunities?: string[];
 }
 
-export default function HeaderSlideshow({ communities = [], onJoinMain, onJoinClick }: HeaderSlideshowProps) {
+export default function HeaderSlideshow({ communities = [], onJoinMain, onJoinClick, isAuthenticated = false, joinedCommunities = [] }: HeaderSlideshowProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,12 +51,12 @@ export default function HeaderSlideshow({ communities = [], onJoinMain, onJoinCl
   };
 
   // Handle join button click
-  const handleJoinClick = (e: React.MouseEvent, community: Community & { _count: { follows: number } }) => {
+  const handleJoinClick = async (e: React.MouseEvent, community: Community & { _count: { follows: number } }) => {
     e.stopPropagation();
     
     if (onJoinClick) {
-      // Use the modal approach if onJoinClick is provided
-      onJoinClick(community);
+      // Use the async join function from parent
+      await onJoinClick(community);
     } else {
       // Fallback to direct navigation
       handleSlideClick(community.slug);
@@ -63,18 +65,20 @@ export default function HeaderSlideshow({ communities = [], onJoinMain, onJoinCl
 
   // Get community description based on title
   const getDescription = (title: string) => {
-    switch (title) {
-      case 'GAMABAND':
-        return 'Join UGM\'s premier music band community. Perform at campus events and showcase your musical talents.';
-      case 'Tim Basket UGM':
-        return 'Compete in university basketball tournaments and train with UGM\'s official basketball team.';
-      case 'GAMAFORCE':
-        return 'Be part of UGM\'s largest and most active student community with diverse interests and activities.';
-      case 'Tim Bola UGM':
-        return 'Represent UGM in football competitions and develop your skills with professional coaching.';
-      case 'UGM eSports':
+    switch (title.toLowerCase()) {
+      case 'gaming':
         return 'Compete in gaming tournaments, join gaming sessions, and connect with fellow esports enthusiasts.';
-      case 'UKM Panahan UGM':
+      case 'basket':
+        return 'Compete in university basketball tournaments and train with UGM\'s official basketball team.';
+      case 'gamaband':
+        return 'Join UGM\'s premier music band community. Perform at campus events and showcase your musical talents.';
+      case 'gamaforce':
+        return 'Be part of UGM\'s largest and most active student community with diverse interests and activities.';
+      case 'tim bola ugm':
+        return 'Represent UGM in football competitions and develop your skills with professional coaching.';
+      case 'ugm esports':
+        return 'Compete in gaming tournaments, join gaming sessions, and connect with fellow esports enthusiasts.';
+      case 'ukm panahan ugm':
         return 'Learn and practice archery with UGM\'s official archery club. All skill levels welcome!';
       default:
         return 'Join this amazing community and connect with fellow UGM students who share your interests.';
@@ -83,28 +87,54 @@ export default function HeaderSlideshow({ communities = [], onJoinMain, onJoinCl
 
   // Fallback colors if images fail to load
   const getFallbackColor = (title: string) => {
-    const colors = {
-      'GAMABAND': 'from-purple-500 to-pink-600',
-      'Tim Basket UGM': 'from-blue-500 to-green-600',
-      'GAMAFORCE': 'from-red-500 to-orange-600',
-      'Tim Bola UGM': 'from-green-500 to-blue-600',
-      'UGM eSports': 'from-indigo-500 to-purple-600',
-      'UKM Panahan UGM': 'from-yellow-500 to-red-600'
+    const colors: Record<string, string> = {
+      'gaming': 'from-indigo-500 to-purple-600',
+      'basket': 'from-blue-500 to-green-600',
+      'gamaband': 'from-purple-500 to-pink-600',
+      'gamaforce': 'from-red-500 to-orange-600',
+      'tim bola ugm': 'from-green-500 to-blue-600',
+      'ugm esports': 'from-indigo-500 to-purple-600',
+      'ukm panahan ugm': 'from-yellow-500 to-red-600'
     };
-    return colors[title as keyof typeof colors] || 'from-gray-500 to-gray-700';
+    return colors[title.toLowerCase()] || 'from-gray-500 to-gray-700';
   };
 
   // Get community category
   const getCategory = (title: string) => {
-    const categories = {
-      'GAMABAND': 'Music & Performance',
-      'Tim Basket UGM': 'Sports',
-      'GAMAFORCE': 'Student Organization',
-      'Tim Bola UGM': 'Sports',
-      'UGM eSports': 'Gaming & Esports',
-      'UKM Panahan UGM': 'Sports'
+    const categories: Record<string, string> = {
+      'gaming': 'Gaming & Esports',
+      'basket': 'Sports',
+      'gamaband': 'Music & Performance',
+      'gamaforce': 'Student Organization',
+      'tim bola ugm': 'Sports',
+      'ugm esports': 'Gaming & Esports',
+      'ukm panahan ugm': 'Sports'
     };
-    return categories[title as keyof typeof categories] || 'Community';
+    return categories[title.toLowerCase()] || 'Community';
+  };
+
+  // Get default image for community based on name/type
+  const getDefaultImage = (title: string) => {
+    const name = title.toLowerCase();
+    if (name.includes('gaming') || name.includes('esport')) {
+      return '/photos/esport.jpg';
+    }
+    if (name.includes('basket') || name.includes('ball')) {
+      return '/photos/basketball.jpg';
+    }
+    if (name.includes('band') || name.includes('music')) {
+      return '/photos/gamaband.jpg';
+    }
+    if (name.includes('archery') || name.includes('panahan')) {
+      return '/photos/archery.jpg';
+    }
+    if (name.includes('football') || name.includes('bola')) {
+      return '/photos/football.jpg';
+    }
+    if (name.includes('force') || name.includes('gamaforce')) {
+      return '/photos/gamaforce.jpg';
+    }
+    return '/photos/basketball.jpg'; // default fallback
   };
 
   // Simulate loading completion
@@ -143,7 +173,7 @@ export default function HeaderSlideshow({ communities = [], onJoinMain, onJoinCl
               {/* Background with Image and Fallback - No Overlay */}
               <div 
                 className={`absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105 ${getFallbackColor(community.name)}`}
-                style={{ backgroundImage: `url(/${community.icon || "/photos/profile.jpg"})` }}
+                style={{ backgroundImage: `url(${community.icon || getDefaultImage(community.name)})` }}
               />
               
               {/* Content */}
@@ -178,32 +208,52 @@ export default function HeaderSlideshow({ communities = [], onJoinMain, onJoinCl
                       </div>
                     </div>
 
-                    {/* Join Button - Updated to use modal */}
+                    {/* Join/View Button - Dynamic based on join status */}
                     <button 
                       onClick={(e) => handleJoinClick(e, community)}
-                      className="
-                        bg-gradient-to-r from-blue-500 to-purple-600 
-                        text-white px-6 md:px-8 py-2 md:py-3 rounded-lg 
-                        font-semibold hover:from-blue-600 hover:to-purple-700 
-                        transition-all duration-300 shadow-lg text-sm md:text-lg 
+                      className={`
+                        px-6 md:px-8 py-2 md:py-3 rounded-lg 
+                        font-semibold transition-all duration-300 shadow-lg text-sm md:text-lg 
                         hover:scale-105 active:scale-95 flex items-center 
                         group/btn relative overflow-hidden
-                      "
+                        ${
+                          joinedCommunities.includes(community.id)
+                            ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white'
+                            : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white'
+                        }
+                      `}
                     >
                       {/* Animated background shine */}
                       <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000" />
                       
                       {/* Button content */}
                       <span className="relative flex items-center">
-                        Join Community
-                        <svg 
-                          className="w-4 h-4 md:w-5 md:h-5 ml-2 transform transition-transform duration-300 group-hover/btn:translate-x-1" 
-                          fill="none" 
-                          stroke="currentColor" 
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
+                        {joinedCommunities.includes(community.id) ? (
+                          <>
+                            View Community
+                            <svg 
+                              className="w-4 h-4 md:w-5 md:h-5 ml-2 transform transition-transform duration-300 group-hover/btn:translate-x-1" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </>
+                        ) : (
+                          <>
+                            Join Community
+                            <svg 
+                              className="w-4 h-4 md:w-5 md:h-5 ml-2 transform transition-transform duration-300 group-hover/btn:translate-x-1" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                          </>
+                        )}
                       </span>
 
                       {/* Ripple effect */}

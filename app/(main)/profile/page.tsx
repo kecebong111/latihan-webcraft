@@ -29,8 +29,9 @@ export default function ProfilePage() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [editName, setEditName] = useState("")
   const [isSaving, setIsSaving] = useState(false)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -40,18 +41,9 @@ export default function ProfilePage() {
         setLoading(false)
       })
     }
-  }, [session?.user?.id, session?.user?.avatar]) // Re-fetch when avatar changes
+  }, [session?.user?.id])
 
-  // Clear success/error messages after 5 seconds
-  useEffect(() => {
-    if (successMessage || errorMessage) {
-      const timer = setTimeout(() => {
-        setSuccessMessage(null)
-        setErrorMessage(null)
-      }, 5000)
-      return () => clearTimeout(timer)
-    }
-  }, [successMessage, errorMessage])
+
 
   const handleAvatarChange = (newAvatarUrl: string) => {
     if (profile) {
@@ -142,22 +134,11 @@ export default function ProfilePage() {
               </div>
               
                <div className="p-6">
-                 {/* Success and Error Messages */}
-                 {successMessage && (
-                   <div className="mb-4 p-3 bg-green-900 border border-green-700 rounded-lg text-green-300">
-                     {successMessage}
-                   </div>
-                 )}
-                 {errorMessage && (
-                   <div className="mb-4 p-3 bg-red-900 border border-red-700 rounded-lg text-red-300">
-                     {errorMessage}
-                   </div>
-                 )}
+
                  
                  <div className="flex flex-col sm:flex-row items-start gap-6 mb-8">
                   <div className="flex-shrink-0">
                     <AvatarUpload
-                      userId={profile?.id}
                       currentAvatar={profile?.avatar || null}
                       onAvatarChange={handleAvatarChange}
                     />
@@ -250,9 +231,9 @@ export default function ProfilePage() {
             {/* Actions Card */}
             <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Actions</h3>
-              
+
               <div className="space-y-3">
-                 <Button 
+                 <Button
                    onClick={handleSaveChanges}
                    disabled={isSaving || !editName.trim()}
                    className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:bg-gray-600"
@@ -266,17 +247,29 @@ export default function ProfilePage() {
                      "Save Changes"
                    )}
                  </Button>
-                 
-                 <Button 
-                   variant="outline" 
+
+                 {/* Success/Error Messages */}
+                 {successMessage && (
+                   <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/50">
+                     <p className="text-green-400 text-sm text-center">{successMessage}</p>
+                   </div>
+                 )}
+                 {errorMessage && (
+                   <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/50">
+                     <p className="text-red-400 text-sm text-center">{errorMessage}</p>
+                   </div>
+                 )}
+
+                 <Button
+                   variant="outline"
                    onClick={() => window.location.reload()}
                    className="w-full border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
                  >
                    Refresh Page
                  </Button>
-                
-                <Button 
-                  variant="outline" 
+
+                <Button
+                  variant="outline"
                   onClick={() => router.push("/dashboard")}
                   className="w-full border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
                 >

@@ -113,7 +113,7 @@ export default async function PostPage() {
                         name: posts[0].author.name || "Anonymous"
                       }
                     }}
-                    featured={true}
+
                   />
                 </div>
               )}

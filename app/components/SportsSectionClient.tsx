@@ -13,6 +13,7 @@ interface SportsSectionClientProps {
 import { getFollowedCommunities, followCommunity } from '@/actions/community';
 import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function SportsSectionClient({ communities }: SportsSectionClientProps) {
   const [joinedCommunities, setJoinedCommunities] = useState<string[]>([]);
@@ -20,6 +21,7 @@ export default function SportsSectionClient({ communities }: SportsSectionClient
   const [selectedCommunity, setSelectedCommunity] = useState<(Community & { _count: { follows: number } }) | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const { data: session } = useSession();
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchFollowedCommunities() {
@@ -31,13 +33,39 @@ export default function SportsSectionClient({ communities }: SportsSectionClient
     fetchFollowedCommunities();
   }, [session]);
 
-  const handleJoinClick = (community: Community & { _count: { follows: number } }) => {
-    setSelectedCommunity(community);
-    setIsModalOpen(true);
+  const handleJoinClick = async (community: Community & { _count: { follows: number } }) => {
+    // Check if user is authenticated
+    if (!session?.user?.id) {
+      // Redirect to login with return URL
+      router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
+    
+    // Check if already joined
+    if (joinedCommunities.includes(community.id)) {
+      // Already a member, just redirect to community page
+      router.push(`/c/${community.slug}`);
+      return;
+    }
+    
+    // Directly join the community and redirect
+    try {
+      await followCommunity(session.user.id, community.id);
+      setJoinedCommunities(prev => [...prev, community.id]);
+      // Redirect to community page after joining
+      router.push(`/c/${community.slug}`);
+    } catch (error) {
+      console.error('Failed to join community:', error);
+      // You could show an error message here
+    }
   };
 
   const handleJoinConfirm = async () => {
-    if (!selectedCommunity || !session?.user?.id) return;
+    if (!selectedCommunity || !session?.user?.id) {
+      // Redirect to login if somehow not authenticated
+      window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`;
+      return;
+    }
 
     setIsJoining(true);
     
@@ -46,6 +74,7 @@ export default function SportsSectionClient({ communities }: SportsSectionClient
       setJoinedCommunities(prev => [...prev, selectedCommunity.id]);
     } catch (error) {
       console.error('Failed to join community:', error);
+      // You could show an error message here
     } finally {
       setIsJoining(false);
       setIsModalOpen(false);
@@ -75,6 +104,8 @@ export default function SportsSectionClient({ communities }: SportsSectionClient
         communities={communities}
         onJoinMain={handleJoinMain}
         onJoinClick={handleJoinClick}
+        isAuthenticated={!!session?.user?.id}
+        joinedCommunities={joinedCommunities}
       />
 
       {/* Active Community Section */}
@@ -92,8 +123,6 @@ export default function SportsSectionClient({ communities }: SportsSectionClient
               title={community.name}
               memberCount={community._count.follows}
               bio={community.description || ""}
-              onJoin={handleJoinCommunity}
-              onJoinClick={handleJoinClick} // Pass the click handler
               isJoined={joinedCommunities.includes(community.id)}
             />
           ))}

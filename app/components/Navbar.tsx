@@ -16,6 +16,7 @@ import { motion } from "framer-motion"
 import { useSession } from "next-auth/react"
 import { Community } from "@prisma/client"
 import { UserDropdown } from "@/components/layout/user-dropdown" // ✅ import dropdown
+import { MonogramAvatar } from "@/components/ui/monogram-avatar" // Import MonogramAvatar
 import Link from "next/link" // Import Link from next/link
 
 interface NavbarProps {
@@ -44,15 +45,25 @@ export default function Navbar({ followedCommunities }: NavbarProps) {
           </button>
         </div>
 
-        {/* Middle: Search */}
-        <div className="flex items-center bg-[#1a1a1a] px-4 py-2 rounded-full w-80">
-          <Search size={18} className="text-gray-400 mr-2" />
-          <input
-            type="text"
-            placeholder="Search apa aja gapapa"
-            className="bg-transparent outline-none text-sm w-full text-gray-300 placeholder-gray-500"
-          />
-        </div>
+        {/* Middle: Search - Only show when logged in */}
+        {session?.user?.id && (
+          <div className="flex items-center bg-[#1a1a1a] px-4 py-2 rounded-full w-80">
+            <Search size={18} className="text-gray-400 mr-2" />
+            <input
+              type="text"
+              placeholder="Search posts..."
+              className="bg-transparent outline-none text-sm w-full text-gray-300 placeholder-gray-500"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const searchQuery = (e.target as HTMLInputElement).value.trim();
+                  if (searchQuery) {
+                    router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+                  }
+                }
+              }}
+            />
+          </div>
+        )}
 
         {/* Right section */}
         <div className="flex items-center space-x-5">
@@ -111,13 +122,23 @@ export default function Navbar({ followedCommunities }: NavbarProps) {
                   className="flex items-center justify-between hover:bg-[#1a1a1a] p-2 rounded-lg w-full text-left"
                 >
                   <div className="flex items-center gap-3">
-                    <Image
-                      src={item.icon || "/photos/profile.jpg"}
-                      alt={item.name}
-                      width={32}
-                      height={32}
-                      className="rounded-full"
-                    />
+                    {item.icon ? (
+                      <Image
+                        src={item.icon}
+                        alt={item.name}
+                        width={32}
+                        height={32}
+                        className="rounded-full"
+                      />
+                    ) : (
+                      <div className="w-8 h-8">
+                        <MonogramAvatar 
+                          name={item.name} 
+                          size="sm"
+                          className="w-8 h-8"
+                        />
+                      </div>
+                    )}
                     <span>{item.name}</span>
                   </div>
                 </button>

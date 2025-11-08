@@ -41,10 +41,15 @@ export async function getAllUsers() {
 }
 
 export async function updateUserAvatar(userId: string, avatarUrl: string) {
-  return await prisma.user.update({
-    where: { id: userId },
-    data: { avatar: avatarUrl }
-  })
+  try {
+    const result = await prisma.user.update({
+      where: { id: userId },
+      data: { avatar: avatarUrl }
+    })
+    return result
+  } catch (error) {
+    throw error
+  }
 }
 
 export async function updateUserPassword(userId: string, currentPassword: string, newPassword: string) {

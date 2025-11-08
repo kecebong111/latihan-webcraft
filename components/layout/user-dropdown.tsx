@@ -15,11 +15,7 @@ export function UserDropdown() {
   const name = session?.user?.name || "Anonymous"
   const email = session?.user?.email || "No email"
   
-  // Debug session data
-  useEffect(() => {
-    console.log('UserDropdown session data:', session?.user)
-    console.log('Raw avatar from session:', session?.user?.avatar)
-  }, [session])
+
 
   // Close dropdown when clicking outside
   useEffect(() => {

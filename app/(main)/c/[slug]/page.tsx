@@ -103,7 +103,6 @@ export default async function CommunityPage({ params }: PageProps) {
                   communityId={community.id} 
                   isFollowing={isFollowing} 
                   size="lg"
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                 />
               </div>
             </div>
