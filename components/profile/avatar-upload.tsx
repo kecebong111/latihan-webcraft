@@ -1,22 +1,22 @@
 "use client"
 
 import { useState, useRef } from "react"
-import Image from "next/image"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { updateUserAvatar } from "@/actions/user"
 import { useSession } from "next-auth/react"
+import { MonogramAvatar } from "@/components/ui/monogram-avatar"
 
 interface AvatarUploadProps {
-  userId: string
+  userId?: string
   currentAvatar: string | null
   onAvatarChange: (newAvatarUrl: string) => void
 }
 
 export function AvatarUpload({ userId, currentAvatar, onAvatarChange }: AvatarUploadProps) {
   const [preview, setPreview] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { update } = useSession()
+  const { update, data: session } = useSession()
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -34,21 +34,53 @@ export function AvatarUpload({ userId, currentAvatar, onAvatarChange }: AvatarUp
   const handleUpload = async () => {
     if (!fileInputRef.current?.files?.[0]) return
 
+    setIsUploading(true)
     const file = fileInputRef.current.files[0]
-    // In a real application, you would upload this file to a service like Cloudinary, S3, etc.
-    // For this example, we'll simulate an upload and use a placeholder URL.
-    // You would get a secure URL from your upload service.
-    const simulatedUploadUrl = `https://api.dicebear.com/7.x/lorelei/svg?seed=${Math.random()}`
+    const formData = new FormData()
+    formData.append('file', file)
 
     try {
-      await updateUserAvatar(userId, simulatedUploadUrl)
-      onAvatarChange(simulatedUploadUrl)
-      setPreview(null) // Clear preview after upload
-      await update({ avatar: simulatedUploadUrl }) // Update session
-      alert("Avatar updated successfully!")
+      console.log('Starting avatar upload...')
+      const response = await fetch('/api/upload/avatar', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = await response.json()
+      console.log('Upload response:', result)
+
+      if (response.ok && result.success) {
+        console.log('Upload successful, updating UI...')
+        onAvatarChange(result.avatarUrl)
+        setPreview(null) // Clear preview after upload
+        
+        // Update session with new avatar
+        console.log('Updating session with avatar:', result.avatarUrl)
+        try {
+          const updateResult = await update({ 
+            avatar: result.avatarUrl,
+          })
+          console.log('Session update result:', updateResult)
+          
+          // Also update the parent component's profile state
+          onAvatarChange(result.avatarUrl)
+          
+        } catch (sessionError) {
+          console.error('Session update failed:', sessionError)
+        }
+        
+
+        
+        alert("Avatar updated successfully!")
+      } else {
+        console.error('Upload failed:', result)
+        alert(result.error || "Failed to update avatar.")
+      }
     } catch (error) {
       console.error("Failed to update avatar:", error)
       alert("Failed to update avatar.")
+    } finally {
+      setIsUploading(false)
     }
   }
 
@@ -63,8 +95,13 @@ export function AvatarUpload({ userId, currentAvatar, onAvatarChange }: AvatarUp
       />
       <div className="relative group">
         <Avatar className="w-24 h-24 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-          <AvatarImage src={preview || currentAvatar || "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"} alt="Profile Avatar" />
-          <AvatarFallback>U</AvatarFallback>
+          {preview || currentAvatar ? (
+            <AvatarImage src={preview || currentAvatar || undefined} alt="Profile Avatar" />
+          ) : (
+            <AvatarFallback className="bg-gray-500 text-white">
+              {session?.user?.name ? session.user.name.substring(0, 2).toUpperCase() : "U"}
+            </AvatarFallback>
+          )}
         </Avatar>
         <div
           className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
@@ -75,7 +112,20 @@ export function AvatarUpload({ userId, currentAvatar, onAvatarChange }: AvatarUp
       </div>
       
       {preview && (
-        <Button onClick={handleUpload}>Upload New Avatar</Button>
+        <Button 
+          onClick={handleUpload}
+          disabled={isUploading}
+          className="w-full"
+        >
+          {isUploading ? (
+            <>
+              <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2"></div>
+              Uploading...
+            </>
+          ) : (
+            "Upload New Avatar"
+          )}
+        </Button>
       )}
     </div>
   )

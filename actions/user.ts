@@ -84,8 +84,9 @@ export async function updateUserProfile(userId: string, fields: UpdateUserFields
       data: fields,
     })
     return { success: "Profile updated successfully." }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Failed to update user profile:", error)
-    return { error: error.message || "Failed to update profile." }
+    const errorMessage = error instanceof Error ? error.message : "Failed to update profile."
+    return { error: errorMessage }
   }
 }

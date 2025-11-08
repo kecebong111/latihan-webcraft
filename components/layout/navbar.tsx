@@ -77,7 +77,7 @@ export default function Navbar() {
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={userData?.avatar || session.user?.image || ""}
+                        src={userData?.avatar || session.user?.avatar || ""}
                         alt={userData?.name || session.user?.name || ""}
                       />
                       <AvatarFallback>

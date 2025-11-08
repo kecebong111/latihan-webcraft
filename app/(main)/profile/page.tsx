@@ -3,8 +3,7 @@
 import { useSession } from "next-auth/react"
 import { getUserById } from "@/actions/user"
 import { useEffect, useState } from "react"
-import { Mail, Calendar, ArrowLeft, User, Shield, Key, Home } from "lucide-react"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Mail, Calendar, User, Shield, Key, Home } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { AvatarUpload } from "@/components/profile/avatar-upload"
@@ -23,13 +22,15 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-  const { data: session } = useSession()
+  const { data: session, update } = useSession()
   const router = useRouter()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [editName, setEditName] = useState("")
   const [isSaving, setIsSaving] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -39,7 +40,18 @@ export default function ProfilePage() {
         setLoading(false)
       })
     }
-  }, [session])
+  }, [session?.user?.id, session?.user?.avatar]) // Re-fetch when avatar changes
+
+  // Clear success/error messages after 5 seconds
+  useEffect(() => {
+    if (successMessage || errorMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage(null)
+        setErrorMessage(null)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [successMessage, errorMessage])
 
   const handleAvatarChange = (newAvatarUrl: string) => {
     if (profile) {
@@ -51,14 +63,20 @@ export default function ProfilePage() {
     if (!session?.user?.id) return
     
     setIsSaving(true)
+    setErrorMessage(null)
+    setSuccessMessage(null)
+    
     const result = await updateUserProfile(session.user.id, { name: editName })
     
     if (result.success) {
       if (profile) {
         setProfile({ ...profile, name: editName })
       }
+      // Update session to reflect changes
+      await update({ name: editName })
+      setSuccessMessage("Profile updated successfully!")
     } else {
-      alert(`Failed to update profile: ${result.error}`)
+      setErrorMessage(`Failed to update profile: ${result.error}`)
     }
     setIsSaving(false)
   }
@@ -123,11 +141,23 @@ export default function ProfilePage() {
                 <p className="text-gray-400">Manage your personal details and preferences</p>
               </div>
               
-              <div className="p-6">
-                <div className="flex flex-col sm:flex-row items-start gap-6 mb-8">
+               <div className="p-6">
+                 {/* Success and Error Messages */}
+                 {successMessage && (
+                   <div className="mb-4 p-3 bg-green-900 border border-green-700 rounded-lg text-green-300">
+                     {successMessage}
+                   </div>
+                 )}
+                 {errorMessage && (
+                   <div className="mb-4 p-3 bg-red-900 border border-red-700 rounded-lg text-red-300">
+                     {errorMessage}
+                   </div>
+                 )}
+                 
+                 <div className="flex flex-col sm:flex-row items-start gap-6 mb-8">
                   <div className="flex-shrink-0">
                     <AvatarUpload
-                      userId={profile?.id as string}
+                      userId={profile?.id}
                       currentAvatar={profile?.avatar || null}
                       onAvatarChange={handleAvatarChange}
                     />
@@ -222,20 +252,28 @@ export default function ProfilePage() {
               <h3 className="text-lg font-semibold text-white mb-4">Actions</h3>
               
               <div className="space-y-3">
-                <Button 
-                  onClick={handleSaveChanges}
-                  disabled={isSaving || !editName.trim()}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:bg-gray-600"
-                >
-                  {isSaving ? (
-                    <>
-                      <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2"></div>
-                      Saving...
-                    </>
-                  ) : (
-                    "Save Changes"
-                  )}
-                </Button>
+                 <Button 
+                   onClick={handleSaveChanges}
+                   disabled={isSaving || !editName.trim()}
+                   className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:bg-gray-600"
+                 >
+                   {isSaving ? (
+                     <>
+                       <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2"></div>
+                       Saving...
+                     </>
+                   ) : (
+                     "Save Changes"
+                   )}
+                 </Button>
+                 
+                 <Button 
+                   variant="outline" 
+                   onClick={() => window.location.reload()}
+                   className="w-full border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                 >
+                   Refresh Page
+                 </Button>
                 
                 <Button 
                   variant="outline" 

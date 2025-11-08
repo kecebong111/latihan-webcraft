@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'www.istockphoto.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'img.daisyui.com',
+      },
     ],
   },
 };

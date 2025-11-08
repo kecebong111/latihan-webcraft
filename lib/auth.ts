@@ -1,11 +1,9 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/db"
 import bcrypt from "bcryptjs"
 
 const authOptions = {
-  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -40,10 +38,10 @@ const authOptions = {
         return {
           id: user.id,
           email: user.email,
-          name: user.name,
+          name: user.name || "",
           role: user.role,
           status: user.status,
-          avatar: user.avatar, // Add avatar here
+          avatar: user.avatar || undefined, // Convert null to undefined
         }
       }
     })
@@ -52,12 +50,21 @@ const authOptions = {
     strategy: "jwt" as const
   },
   callbacks: {
-    async jwt({ token, user }: any) {
+    async jwt({ token, user, trigger, session }: any) {
       if (user) {
         token.role = user.role
         token.status = user.status
-        token.avatar = user.avatar // Add avatar to token
+        token.avatar = user.avatar
+        token.name = user.name
       }
+      
+      // Handle session updates
+      if (trigger === "update" && session) {
+        console.log('JWT callback - updating token with session:', session)
+        token.name = session.name || token.name
+        token.avatar = session.avatar || token.avatar
+      }
+      
       return token
     },
     async session({ session, token }: any) {
@@ -65,7 +72,9 @@ const authOptions = {
         session.user.id = token.sub!
         session.user.role = token.role as string
         session.user.status = token.status as string
-        session.user.avatar = token.avatar as string // Add avatar to session
+        session.user.avatar = token.avatar as string || undefined
+        session.user.name = token.name as string
+        console.log('Session callback - updated session user:', session.user)
       }
       return session
     }
