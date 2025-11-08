@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link'; // Import Link from next/link
-import FollowButton from '@/components/community/follow-button'; // Import FollowButton
+import ViewButton from '@/components/community/view-button'; // Import ViewButton
 
 interface CommunityCardProps {
   id: string;
@@ -13,7 +13,6 @@ interface CommunityCardProps {
   memberCount: number;
   bio?: string;
   className?: string;
-  isJoined: boolean;
 }
 
 export default function CommunityCard({ 
@@ -24,8 +23,7 @@ export default function CommunityCard({
   title, 
   memberCount, 
   bio,
-  className = "",
-  isJoined
+  className = ""
 }: CommunityCardProps) {
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
@@ -75,10 +73,8 @@ export default function CommunityCard({
             {memberCount.toLocaleString()} {memberCount === 1 ? 'person' : 'people'}
           </span>
           
-          {/* Use FollowButton component instead of custom button */}
-          <FollowButton 
-            communityId={id}
-            isFollowing={isJoined}
+          {/* Use ViewButton for homepage */}
+          <ViewButton 
             size="sm"
           />
         </div>

@@ -45,14 +45,12 @@ export function AvatarUpload({ currentAvatar, onAvatarChange }: AvatarUploadProp
     setIsUploading(true)
 
     try {
-      // Read file as base64
-      const reader = new FileReader()
+      // Create FormData for file upload (same as post upload)
+      const formData = new FormData()
+      formData.append('file', file)
 
-      reader.onloadend = async () => {
-        const base64Data = reader.result as string
-
-        // Call server action with base64 data
-        const result = await uploadAvatar(base64Data, file.type)
+      // Call server action with FormData
+      const result = await uploadAvatar(formData)
 
         if (result.success && result.avatarUrl) {
           onAvatarChange(result.avatarUrl)
@@ -64,22 +62,22 @@ export function AvatarUpload({ currentAvatar, onAvatarChange }: AvatarUploadProp
               avatar: result.avatarUrl,
             })
             alert("Avatar updated successfully!")
+            // Force a page refresh to ensure session updates everywhere
+            setTimeout(() => {
+              window.location.reload()
+            }, 1000)
           } catch (sessionError) {
             alert("Avatar saved but session update failed. Please refresh the page.")
+            // Still refresh to show the new avatar
+            setTimeout(() => {
+              window.location.reload()
+            }, 1000)
           }
         } else {
           alert(result.error || "Failed to update avatar.")
         }
 
-        setIsUploading(false)
-      }
-
-      reader.onerror = () => {
-        alert("Failed to read file.")
-        setIsUploading(false)
-      }
-
-      reader.readAsDataURL(file)
+      setIsUploading(false)
     } catch (error) {
       alert("Failed to update avatar.")
       setIsUploading(false)
