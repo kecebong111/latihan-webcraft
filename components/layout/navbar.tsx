@@ -14,9 +14,42 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import ThemeToggle from "./theme-toggle";
+import { useEffect, useState } from "react";
+
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  role: string;
+  status: string;
+}
 
 export default function Navbar() {
   const { data: session } = useSession();
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchUserData();
+    }
+  }, [session?.user?.id]);
+
+  const fetchUserData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/user');
+      if (response.ok) {
+        const data = await response.json();
+        setUserData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -35,7 +68,7 @@ export default function Navbar() {
           <div className="flex items-center space-x-2">
             <ThemeToggle />
 
-            {session ? (
+{session ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -44,11 +77,11 @@ export default function Navbar() {
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={session.user?.image || ""}
-                        alt={session.user?.name || ""}
+                        src={userData?.avatar || session.user?.image || ""}
+                        alt={userData?.name || session.user?.name || ""}
                       />
                       <AvatarFallback>
-                        {session.user?.name?.charAt(0) || "U"}
+                        {(userData?.name || session.user?.name)?.charAt(0) || "U"}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -57,11 +90,14 @@ export default function Navbar() {
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {session.user?.name}
+                        {userData?.name || session.user?.name}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        {session.user?.email}
+                        {userData?.email || session.user?.email}
                       </p>
+                      {loading && (
+                        <p className="text-xs text-muted-foreground">Loading...</p>
+                      )}
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -74,7 +110,7 @@ export default function Navbar() {
                       Profile
                     </Link>
                   </DropdownMenuItem>
-                  {(session.user as any)?.role === "ADMIN" && (
+                  {(userData?.role === "ADMIN" || (session.user as any)?.role === "ADMIN") && (
                     <DropdownMenuItem asChild>
                       <Link href="/admin" className="cursor-pointer">
                         Admin Panel

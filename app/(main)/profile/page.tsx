@@ -4,6 +4,12 @@ import { useSession } from "next-auth/react"
 import { getUserById } from "@/actions/user"
 import { useEffect, useState } from "react"
 import { Mail, Calendar } from "lucide-react"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input" // Import Input
+import { AvatarUpload } from "@/components/profile/avatar-upload"
+import { ChangePasswordModal } from "@/components/profile/change-password-modal"
+import { updateUserProfile } from "@/actions/user" // Will create this next
 
 interface UserProfile {
   id: string
@@ -19,15 +25,38 @@ export default function ProfilePage() {
   const { data: session } = useSession()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
+  const [editName, setEditName] = useState("") // State for editable name
 
   useEffect(() => {
     if (session?.user?.id) {
       getUserById(session.user.id).then((data) => {
         setProfile(data)
+        setEditName(data?.name || "") // Initialize editName
         setLoading(false)
       })
     }
   }, [session])
+
+  const handleAvatarChange = (newAvatarUrl: string) => {
+    if (profile) {
+      setProfile({ ...profile, avatar: newAvatarUrl })
+    }
+  }
+
+  const handleSaveChanges = async () => {
+    if (!session?.user?.id) return
+    // For now, only name is editable. Extend this for other fields later.
+    const result = await updateUserProfile(session.user.id, { name: editName })
+    if (result.success) {
+      alert("Profile updated successfully!")
+      if (profile) {
+        setProfile({ ...profile, name: editName })
+      }
+    } else {
+      alert(`Failed to update profile: ${result.error}`)
+    }
+  }
 
   if (!session) {
     return (
@@ -51,16 +80,19 @@ export default function ProfilePage() {
         <h2 className="text-2xl font-bold mb-6">My Profile</h2>
         
         <div className="flex items-center gap-6 mb-6">
-          <div className="w-24 h-24 rounded-full overflow-hidden">
-            <img
-              src={profile?.avatar || "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"}
-              alt="Profile"
-              className="w-full h-full object-cover"
-            />
-          </div>
+          <AvatarUpload
+            userId={profile?.id as string}
+            currentAvatar={profile?.avatar || null}
+            onAvatarChange={handleAvatarChange}
+          />
           
           <div>
-            <h3 className="text-xl font-semibold">{profile?.name || "No name"}</h3>
+            <Input
+              id="name"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              className="text-xl font-semibold mb-1"
+            />
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Mail className="w-4 h-4" />
               {profile?.email}
@@ -90,8 +122,21 @@ export default function ProfilePage() {
               {profile?.status?.toLowerCase()}
             </div>
           </div>
+
+          <div className="p-4 border rounded-lg">
+            <div className="text-sm font-medium text-muted-foreground">Password</div>
+            <div className="text-lg">********</div>
+            <Button variant="link" className="p-0 h-auto" onClick={() => setIsPasswordModalOpen(true)}>Change Password</Button>
+          </div>
+        </div>
+        <div className="mt-6 flex justify-end">
+          <Button onClick={handleSaveChanges}>Save Changes</Button>
         </div>
       </div>
+      <ChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+      />
     </div>
   )
 }

@@ -126,6 +126,25 @@ export async function deletePostAdmin(postId: string) {
   return await deletePost(postId)
 }
 
+import { writeFile } from "fs/promises";
+import { join } from "path";
+
+export async function uploadCommunityIcon(formData: FormData) {
+  const file = formData.get("icon") as File;
+  if (!file) {
+    throw new Error("No file uploaded");
+  }
+
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+
+  const filename = `${Date.now()}-${file.name}`;
+  const path = join(process.cwd(), "public/photos/community", filename);
+  await writeFile(path, buffer);
+
+  return `/photos/community/${filename}`;
+}
+
 export async function deleteCommunityAdmin(communityId: string) {
   return await prisma.community.delete({
     where: { id: communityId }

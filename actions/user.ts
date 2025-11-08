@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/db"
+import bcrypt from "bcryptjs"
 
 export async function getUserById(id: string) {
   return await prisma.user.findUnique({
@@ -13,6 +14,7 @@ export async function getUserById(id: string) {
       role: true,
       status: true,
       createdAt: true,
+      passwordHash: true, // Select passwordHash for comparison
     }
   })
 }
@@ -36,4 +38,54 @@ export async function getAllUsers() {
     },
     orderBy: { createdAt: "desc" }
   })
+}
+
+export async function updateUserAvatar(userId: string, avatarUrl: string) {
+  return await prisma.user.update({
+    where: { id: userId },
+    data: { avatar: avatarUrl }
+  })
+}
+
+export async function updateUserPassword(userId: string, currentPassword: string, newPassword: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  })
+
+  if (!user || !user.passwordHash) {
+    return { error: "User not found or password not set." }
+  }
+
+  const isPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash)
+
+  if (!isPasswordValid) {
+    return { error: "Incorrect current password." }
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash: hashedPassword }
+  })
+
+  return { success: "Password updated successfully." }
+}
+
+interface UpdateUserFields {
+  name?: string | null;
+  // Add other fields here as they become editable
+}
+
+export async function updateUserProfile(userId: string, fields: UpdateUserFields) {
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: fields,
+    })
+    return { success: "Profile updated successfully." }
+  } catch (error: any) {
+    console.error("Failed to update user profile:", error)
+    return { error: error.message || "Failed to update profile." }
+  }
 }

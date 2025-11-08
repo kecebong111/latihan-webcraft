@@ -1,60 +1,89 @@
 "use client"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { useSession, signOut } from "next-auth/react"
+import { motion, AnimatePresence } from "framer-motion"
+import { useState, useRef, useEffect } from "react"
+import Image from "next/image"
 import { User, LogOut } from "lucide-react"
-import { signOut } from "next-auth/react"
 
-interface UserDropdownProps {
-  name?: string | null
-  email?: string | null
-  image?: string | null
-}
+export function UserDropdown() {
+  const { data: session } = useSession()
+  const [open, setOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
-export function UserDropdown({ name, email, image }: UserDropdownProps) {
-  const initials = name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U'
+  const name = session?.user?.name || "Anonymous"
+  const email = session?.user?.email || "No email"
+  const image = session?.user?.avatar || "/photos/profile.jpg"
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={image || undefined} alt={name || ""} />
-            <AvatarFallback>{initials}</AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel className="flex flex-col space-y-1 p-2">
-          <p className="text-sm font-medium leading-none">{name || "Anonymous"}</p>
-          <p className="text-xs leading-none text-muted-foreground">
-            {email || "No email"}
-          </p>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <a href="/profile" className="flex items-center cursor-pointer">
-            <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem 
-          className="flex items-center cursor-pointer"
-          onClick={() => signOut({ callbackUrl: '/login' })}
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="relative" ref={dropdownRef}>
+      {/* Profile Button */}
+      <button
+        onClick={() => setOpen(!open)}
+        className="relative focus:outline-none"
+      >
+        <Image
+          src={image}
+          alt={name}
+          width={32}
+          height={32}
+          className="rounded-full border-2 border-gray-700 hover:border-gray-500 transition"
+        />
+        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border border-black"></span>
+      </button>
+
+      {/* Dropdown Menu */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="absolute right-0 mt-2 w-52 bg-[#1a1a1a] rounded-lg shadow-xl py-2 z-50 border border-[#2a2a2a]"
+          >
+            {/* Header */}
+            <div className="px-4 py-2">
+              <p className="text-sm font-semibold text-white">{name}</p>
+              <p className="text-xs text-gray-400">{email}</p>
+            </div>
+
+            <div className="border-t border-gray-700 my-1"></div>
+
+            {/* Profile Link */}
+            <button
+              onClick={() => {
+                setOpen(false)
+                window.location.href = "/profile"
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-[#333] flex items-center gap-2 transition"
+            >
+              <User size={16} className="text-gray-400" />
+              Profile
+            </button>
+
+            {/* Logout */}
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#333] flex items-center gap-2 transition"
+            >
+              <LogOut size={16} />
+              Log Out
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }

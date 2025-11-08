@@ -43,6 +43,7 @@ const authOptions = {
           name: user.name,
           role: user.role,
           status: user.status,
+          avatar: user.avatar, // Add avatar here
         }
       }
     })
@@ -55,6 +56,7 @@ const authOptions = {
       if (user) {
         token.role = user.role
         token.status = user.status
+        token.avatar = user.avatar // Add avatar to token
       }
       return token
     },
@@ -63,6 +65,7 @@ const authOptions = {
         session.user.id = token.sub!
         session.user.role = token.role as string
         session.user.status = token.status as string
+        session.user.avatar = token.avatar as string // Add avatar to session
       }
       return session
     }
