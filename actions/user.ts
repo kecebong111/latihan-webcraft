@@ -47,8 +47,8 @@ export async function updateUserAvatar(userId: string, avatarUrl: string) {
       data: { avatar: avatarUrl }
     })
     return result
-  } catch (error) {
-    throw error
+} catch (error) {
+    return { success: false, error: "Failed to update profile" }
   }
 }
 
@@ -90,7 +90,6 @@ export async function updateUserProfile(userId: string, fields: UpdateUserFields
     })
     return { success: "Profile updated successfully." }
   } catch (error: unknown) {
-    console.error("Failed to update user profile:", error)
     const errorMessage = error instanceof Error ? error.message : "Failed to update profile."
     return { error: errorMessage }
   }

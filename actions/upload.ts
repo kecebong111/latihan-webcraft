@@ -54,7 +54,6 @@ export async function uploadAvatar(formData: FormData) {
     }
 
   } catch (error) {
-    console.error("Upload error:", error)
     return { success: false, error: `Failed to upload avatar: ${error instanceof Error ? error.message : 'Unknown error'}` }
   }
 }

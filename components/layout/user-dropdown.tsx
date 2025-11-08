@@ -62,7 +62,6 @@ export function UserDropdown() {
             height={32}
             className="rounded-full border-2 border-gray-700 hover:border-gray-500 transition"
             onError={(e) => {
-              console.error('Image failed to load:', session.user.avatar)
               // Fallback to monogram if image fails to load
               const target = e.target as HTMLImageElement
               target.style.display = 'none'

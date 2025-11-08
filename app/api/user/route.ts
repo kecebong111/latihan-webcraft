@@ -25,8 +25,7 @@ export async function GET(request: NextRequest) {
       status: user.status,
       createdAt: user.createdAt,
     });
-  } catch (error) {
-    console.error('Error fetching user data:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+} catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch user data' }, { status: 500 });
   }
 }

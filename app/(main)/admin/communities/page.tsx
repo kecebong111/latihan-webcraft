@@ -47,7 +47,6 @@ export default function AdminCommunitiesPage() {
         await deleteCommunityAdmin(communityId);
         setCommunities(communities.filter((c) => c.id !== communityId));
       } catch (error) {
-        console.error("Failed to delete community:", error);
         alert("Failed to delete community");
       } finally {
         setDeleting(null);

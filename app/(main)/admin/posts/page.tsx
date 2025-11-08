@@ -64,8 +64,6 @@ export default function AdminPostsPage() {
           ? { ...post, status: currentStatus === "ACTIVE" ? "SUSPENDED" : "ACTIVE" }
           : post
       ))
-    } catch (error) {
-      console.error("Failed to update post status:", error)
     } finally {
       setProcessing(null)
     }
@@ -78,8 +76,6 @@ export default function AdminPostsPage() {
         await deletePostAdmin(postId)
         setPosts(posts.filter(post => post.id !== postId))
         setTotal(total - 1)
-      } catch (error) {
-        console.error("Failed to delete post:", error)
       } finally {
         setProcessing(null)
       }

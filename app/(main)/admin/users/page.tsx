@@ -53,8 +53,6 @@ export default function AdminUsersPage() {
           ? { ...user, status: currentStatus === "ACTIVE" ? "SUSPENDED" : "ACTIVE" }
           : user
       ))
-    } catch (error) {
-      console.error("Failed to update user status:", error)
     } finally {
       setProcessing(null)
     }

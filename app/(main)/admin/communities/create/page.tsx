@@ -60,7 +60,6 @@ export default function CreateCommunityPage() {
       await createCommunity(name, slug, description, session.user.id, iconUrl);
       router.push("/admin/communities");
     } catch (error) {
-      console.error("Failed to create community:", error);
       alert("Failed to create community. Please try again.");
     } finally {
       setIsSubmitting(false);

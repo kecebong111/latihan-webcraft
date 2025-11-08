@@ -31,8 +31,6 @@ export default function FollowButton({
     try {
       await followCommunity(session.user.id, communityId)
       setIsFollowing(!isFollowing)
-    } catch (error) {
-      console.error("Failed to follow community:", error)
     } finally {
       setLoading(false)
     }

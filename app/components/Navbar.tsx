@@ -128,7 +128,7 @@ export default function Navbar({ followedCommunities }: NavbarProps) {
                         alt={item.name}
                         width={32}
                         height={32}
-                        className="rounded-full"
+                        className="rounded-full object-cover"
                       />
                     ) : (
                       <div className="w-8 h-8">

@@ -120,7 +120,7 @@ export default async function CreatePostPage({ params }: PageProps) {
                   await fs.writeFile(path.join(uploadsDir, filename), buffer)
                   imageUrl = `/uploads/${filename}`
                 } catch (error) {
-                  console.error("Failed to save image:", error)
+                  // Handle image save error silently
                 }
               }
 

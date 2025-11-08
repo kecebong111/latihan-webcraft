@@ -44,11 +44,9 @@ export default function Navbar() {
         const data = await response.json();
         setUserData(data);
       }
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    } finally {
-      setLoading(false);
-    }
+} catch (error) {
+    // Silently handle error
+  }
   };
 
   return (
