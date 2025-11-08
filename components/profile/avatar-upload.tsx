@@ -5,14 +5,14 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { useSession } from "next-auth/react"
 import { MonogramAvatar } from "@/components/ui/monogram-avatar"
+import { uploadAvatar } from "@/actions/upload"
 
 interface AvatarUploadProps {
-  userId?: string
   currentAvatar: string | null
   onAvatarChange: (newAvatarUrl: string) => void
 }
 
-export function AvatarUpload({ userId, currentAvatar, onAvatarChange }: AvatarUploadProps) {
+export function AvatarUpload({ currentAvatar, onAvatarChange }: AvatarUploadProps) {
   const [preview, setPreview] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -32,24 +32,24 @@ export function AvatarUpload({ userId, currentAvatar, onAvatarChange }: AvatarUp
   }
 
   const handleUpload = async () => {
-    if (!fileInputRef.current?.files?.[0]) return
+    if (!fileInputRef.current?.files?.[0]) {
+      console.log('No file selected')
+      return
+    }
 
-    setIsUploading(true)
     const file = fileInputRef.current.files[0]
+    console.log('Selected file:', file)
+    
+    setIsUploading(true)
     const formData = new FormData()
     formData.append('file', file)
 
     try {
-      console.log('Starting avatar upload...')
-      const response = await fetch('/api/upload/avatar', {
-        method: 'POST',
-        body: formData,
-      })
+      console.log('Starting avatar upload with server action...')
+      const result = await uploadAvatar(formData)
+      console.log('Upload result:', result)
 
-      const result = await response.json()
-      console.log('Upload response:', result)
-
-      if (response.ok && result.success) {
+      if (result.success && result.avatarUrl) {
         console.log('Upload successful, updating UI...')
         onAvatarChange(result.avatarUrl)
         setPreview(null) // Clear preview after upload
@@ -62,16 +62,10 @@ export function AvatarUpload({ userId, currentAvatar, onAvatarChange }: AvatarUp
           })
           console.log('Session update result:', updateResult)
           
-          // Also update the parent component's profile state
-          onAvatarChange(result.avatarUrl)
-          
+          alert("Avatar updated successfully!")
         } catch (sessionError) {
           console.error('Session update failed:', sessionError)
         }
-        
-
-        
-        alert("Avatar updated successfully!")
       } else {
         console.error('Upload failed:', result)
         alert(result.error || "Failed to update avatar.")
