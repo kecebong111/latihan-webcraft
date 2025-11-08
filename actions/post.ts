@@ -239,3 +239,49 @@ export async function getPostById(id: string) {
     }
   })
 }
+
+export async function getAllPosts(page = 1, limit = 10) {
+  const skip = (page - 1) * limit
+
+  const [posts, total] = await Promise.all([
+    prisma.post.findMany({
+      where: {
+        status: "ACTIVE"
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+          }
+        },
+        community: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true,
+          }
+        },
+        _count: {
+          select: {
+            comments: true
+          }
+        }
+      },
+      orderBy: [
+        { isBoardPost: "desc" },
+        { createdAt: "desc" }
+      ],
+      skip,
+      take: limit,
+    }),
+    prisma.post.count({
+      where: {
+        status: "ACTIVE"
+      }
+    })
+  ])
+
+  return { posts, total }
+}

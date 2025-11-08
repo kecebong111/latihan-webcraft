@@ -44,8 +44,8 @@ export default function HeaderSlideshow({ communities = [], onJoinMain, onJoinCl
   };
 
   // Handle slide click to navigate to community pages
-  const handleSlideClick = (communityId: string) => {
-    router.push(`/c/${communityId}`);
+  const handleSlideClick = (communitySlug: string) => {
+    router.push(`/c/${communitySlug}`);
   };
 
   // Handle join button click
@@ -57,7 +57,7 @@ export default function HeaderSlideshow({ communities = [], onJoinMain, onJoinCl
       onJoinClick(community);
     } else {
       // Fallback to direct navigation
-      handleSlideClick(community.id);
+      handleSlideClick(community.slug);
     }
   };
 
@@ -138,7 +138,7 @@ export default function HeaderSlideshow({ communities = [], onJoinMain, onJoinCl
             <div
               key={community.id}
               className="w-full h-full flex-shrink-0 relative cursor-pointer group"
-              onClick={() => handleSlideClick(community.id)}
+              onClick={() => handleSlideClick(community.slug)}
             >
               {/* Background with Image and Fallback - No Overlay */}
               <div 

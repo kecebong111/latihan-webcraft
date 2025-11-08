@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState } from "react" // Import useState
 import { useRouter } from "next/navigation"
 import {
   Search,
@@ -16,6 +16,7 @@ import { motion } from "framer-motion"
 import { useSession } from "next-auth/react"
 import { Community } from "@prisma/client"
 import { UserDropdown } from "@/components/layout/user-dropdown" // ✅ import dropdown
+import Link from "next/link" // Import Link from next/link
 
 interface NavbarProps {
   followedCommunities: Community[]
@@ -87,14 +88,14 @@ export default function Navbar({ followedCommunities }: NavbarProps) {
             </button>
           </div>
 
-          {/* Menu utama */}
           <nav className="space-y-2">
-            <a className="flex items-center gap-3 p-3 rounded-lg bg-[#1a1a1a]">
+            <Link href="/" className="flex items-center gap-3 p-3 rounded-lg bg-[#1a1a1a]">
               <Home className="text-blue-400" /> Home
-            </a>
-            <a className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#1a1a1a]">
+            </Link>
+
+            <Link href="/post" className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#1a1a1a]">
               <ImageIcon className="text-blue-400" /> Post
-            </a>
+            </Link>
           </nav>
 
           {/* Followed Community */}
@@ -125,32 +126,7 @@ export default function Navbar({ followedCommunities }: NavbarProps) {
           </div>
         </div>
 
-        {/* Profile Section */}
-        <button
-          onClick={() => router.push("/")}
-          className="mt-8 bg-[#1a1a1a] p-3 rounded-2xl flex items-center gap-3 w-full text-left hover:bg-[#2a2a2a] transition"
-        >
-          <ChevronLeft size={20} className="text-gray-400" />
-          <Image
-            src="/photos/profile.jpg"
-            alt="Profile"
-            width={40}
-            height={40}
-            className="rounded-full"
-          />
-          <div className="flex flex-col text-sm">
-            <span className="font-semibold">Adit Hama</span>
-            <span className="text-gray-400 text-xs">@Siganteng212</span>
-            <span className="inline-block text-green-300 text-xs font-medium px-2 py-0.5 rounded-full mt-1">
-              Freshman
-            </span>
-            <div className="flex flex-wrap gap-2 mt-1 text-xs">
-              <span className="bg-gray-700 px-2 py-1 rounded-lg">Basketball</span>
-              <span className="bg-gray-700 px-2 py-1 rounded-lg">Football</span>
-              <span className="bg-gray-700 px-2 py-1 rounded-lg">Book</span>
-            </div>
-          </div>
-        </button>
+
       </motion.aside>
     </>
   )

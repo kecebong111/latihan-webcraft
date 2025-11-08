@@ -1,16 +1,11 @@
-import SportsSectionClient from '../components/SportsSectionClient';
-import Navbar from '../components/Navbar'; // Import Navbar
-import { getFollowedCommunities, getAllCommunities } from '@/actions/community';
+import SportsSectionClient from '@/app/components/SportsSectionClient';
+import { getAllCommunities } from '@/actions/community';
 
 export default async function Home() {
-  const followedCommunities = await getFollowedCommunities();
   const communities = await getAllCommunities();
   return (
     <>
-      <Navbar followedCommunities={followedCommunities} /> {/* Render Navbar */}
-      <main>
-        <SportsSectionClient communities={communities} />
-      </main>
+      <SportsSectionClient communities={communities} />
     </>
   );
 }
